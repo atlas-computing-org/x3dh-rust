@@ -1,7 +1,8 @@
+
 use curve25519_dalek::{edwards::EdwardsPoint, scalar::Scalar};
-use rand::rngs::OsRng;
+use rand_core::{OsRng, RngCore}; 
 use sha2::{Digest, Sha512};
-use hmac::{Hmac, Mac};
+// use hmac::{Hmac, Mac};
 use hkdf::Hkdf;
 
 // X3DH parameters
@@ -49,6 +50,7 @@ pub struct PrekeyId {
     one_time_prekey_id: Option<u32>,
 }
 
+
 // Main protocol implementation
 pub struct X3DHProtocol {
     rng: OsRng,
@@ -61,8 +63,14 @@ impl X3DHProtocol {
 
     // Bob: Generate and publish keys
     pub fn generate_identity_key(&mut self) -> IdentityKey {
-        let private_key = Scalar::random(&mut self.rng);
-        let public_key = EdwardsPoint::mul_base(&private_key);
+
+        let mut bytes = [0u8; 32];
+        self.rng.fill_bytes(&mut bytes);
+        let private_key = Scalar::from_bytes_mod_order(bytes);
+        // let private_key = Scalar::random(&mut self.rng);
+	
+	let public_key = &curve25519_dalek::constants::ED25519_BASEPOINT_POINT * &private_key;
+        //let public_key = EdwardsPoint::mul_base(&private_key);
         
         IdentityKey {
             private_key,
@@ -71,8 +79,14 @@ impl X3DHProtocol {
     }
 
     pub fn generate_signed_prekey(&mut self, identity_key: &IdentityKey) -> SignedPreKey {
-        let private_key = Scalar::random(&mut self.rng);
-        let public_key = EdwardsPoint::mul_base(&private_key);
+	
+        let mut bytes = [0u8; 32];
+        self.rng.fill_bytes(&mut bytes);
+        let private_key = Scalar::from_bytes_mod_order(bytes);
+        // let private_key = Scalar::random(&mut self.rng);
+
+	//  let public_key = EdwardsPoint::mul_base(&private_key);
+	let public_key = &curve25519_dalek::constants::ED25519_BASEPOINT_POINT * &private_key;
         
         // Create signature of the encoded public key using identity key
         let encoded_pk = self.encode_public_key(&public_key);
@@ -86,8 +100,14 @@ impl X3DHProtocol {
     }
 
     pub fn generate_one_time_prekey(&mut self) -> OneTimePreKey {
-        let private_key = Scalar::random(&mut self.rng);
-        let public_key = EdwardsPoint::mul_base(&private_key);
+
+        let mut bytes = [0u8; 32];
+        self.rng.fill_bytes(&mut bytes);
+        let private_key = Scalar::from_bytes_mod_order(bytes);
+        // let private_key = Scalar::random(&mut self.rng);
+
+	let public_key = &curve25519_dalek::constants::ED25519_BASEPOINT_POINT * &private_key;
+	// let public_key = EdwardsPoint::mul_base(&private_key);
         
         OneTimePreKey {
             private_key,
@@ -112,8 +132,14 @@ impl X3DHProtocol {
         }
 
         // Generate ephemeral key
-        let ephemeral_private = Scalar::random(&mut self.rng);
-        let ephemeral_public = EdwardsPoint::mul_base(&ephemeral_private);
+        // let ephemeral_private = Scalar::random(&mut self.rng);
+	let mut bytes = [0u8; 32];
+	self.rng.fill_bytes(&mut bytes);
+	let ephemeral_private = Scalar::from_bytes_mod_order(bytes);
+	
+        // let ephemeral_public = EdwardsPoint::mul_base(&ephemeral_private);
+	let ephemeral_public = &curve25519_dalek::constants::ED25519_BASEPOINT_POINT * &ephemeral_private;
+
         let ephemeral_key = EphemeralKey {
             private_key: ephemeral_private,
             public_key: ephemeral_public,
@@ -301,13 +327,21 @@ impl X3DHProtocol {
         ad
     }
 
-    fn encrypt_initial_message(&self, key: &[u8], associated_data: &[u8], plaintext: &[u8]) -> Vec<u8> {
+    fn encrypt_initial_message(&self,
+			       key: &[u8],
+			       associated_data: &[u8],
+			       plaintext: &[u8]) -> Vec<u8> {
+	
         // In a real implementation, this would use an AEAD encryption scheme
         // For simplicity, we'll return a placeholder encrypted message
         plaintext.to_vec()
     }
 
-    fn decrypt_initial_message(&self, key: &[u8], associated_data: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>, &'static str> {
+    fn decrypt_initial_message(&self,
+			       key: &[u8],
+			       associated_data: &[u8],
+			       ciphertext: &[u8]) -> Result<Vec<u8>, &'static str> {
+	
         // In a real implementation, this would use an AEAD decryption scheme
         // For simplicity, we'll return the ciphertext as if it was successfully decrypted
         Ok(ciphertext.to_vec())
@@ -353,3 +387,4 @@ fn main() {
     
     println!("X3DH key agreement successful!");
 }
+
