@@ -289,7 +289,7 @@ impl X3DHProtocol {
 
     fn kdf(&self, key_material: &[u8]) -> Vec<u8> {
         // Prepare HKDF input with domain separation
-        let mut f = vec![0xFF; 32]; // For X25519
+        let f = vec![0xFF; 32]; // For X25519
         let mut input = Vec::new();
         input.extend_from_slice(&f);
         input.extend_from_slice(key_material);
